@@ -5,8 +5,24 @@ A lightweight container runtime implementation in Go, demonstrating the fundamen
 ## Development Setup
 
 ### Prerequisites
+
+#### For Intel Macs/Linux/Windows:
 - [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 - [Vagrant](https://www.vagrantup.com/downloads)
+
+#### For Apple Silicon Macs (M1/M2/M3):
+- [VMware Fusion](https://www.vmware.com/products/fusion.html)
+  ```bash
+  brew install --cask vmware-fusion
+  ```
+- [Vagrant](https://www.vagrantup.com/downloads)
+  ```bash
+  brew install vagrant
+  ```
+- Vagrant VMware Utility
+  ```bash
+  vagrant plugin install vagrant-vmware-desktop
+  ```
 
 ### Setting Up Development Environment
 
@@ -30,6 +46,16 @@ vagrant ssh
 ```bash
 cd ~/go-container
 ```
+
+### Common Issues
+
+#### For Apple Silicon (M1/M2/M3) Mac Users:
+- Make sure to install VMware Fusion and the Vagrant VMware plugin
+- VirtualBox is not supported on Apple Silicon
+
+#### For Intel Mac Users:
+- If VirtualBox fails to start, check System Settings → Security & Privacy
+- You may need to allow Oracle/VirtualBox in your security settings
 
 ### Project Structure
 ```
@@ -59,7 +85,7 @@ Inside the Vagrant VM:
 make build
 
 # Run a command in container
-sudo ./bin/container run /bin/bash
+sudo ./bin/container run /bin/sh
 ```
 
 ### Development Workflow
