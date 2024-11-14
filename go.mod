@@ -1,3 +1,3 @@
-module github.com/nomed11/go-container
+module go-container
 
 go 1.21

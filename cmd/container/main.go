@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"syscall"
+	"path/filepath"
+
+	"go-container/internal/container"
+	"go-container/internal/fs"
 )
 
 func main() {
@@ -25,44 +27,36 @@ func main() {
 }
 
 func run() {
-	fmt.Printf("Running command as PID %d\n", os.Getpid())
-
-	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, os.Args[2:]...)...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNS,
+	// Create new container with command
+	cont, err := container.NewContainer(os.Args[2:])
+	if err != nil {
+		fmt.Printf("Error creating container: %v\n", err)
+		os.Exit(1)
 	}
 
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Error running command: %v\n", err)
+	// Setup root filesystem
+	rootfs := fs.NewRootFS(filepath.Join(".", "rootfs"))
+	if !rootfs.Exists() {
+		fmt.Println("Root filesystem not found. Please run 'make setup-rootfs' first")
+		os.Exit(1)
+	}
+
+	// Run the container
+	if err := cont.Run(); err != nil {
+		fmt.Printf("Error running container: %v\n", err)
 		os.Exit(1)
 	}
 }
 
 func child() {
-	fmt.Printf("Running child process as PID %d\n", os.Getpid())
-
-	must(syscall.Mount("rootfs", "rootfs", "", syscall.MS_BIND, ""))
-	must(os.MkdirAll("rootfs/oldrootfs", 0700))
-	must(syscall.PivotRoot("rootfs", "rootfs/oldrootfs"))
-	must(os.Chdir("/"))
-
-	cmd := exec.Command(os.Args[2], os.Args[3:]...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Error running child command: %v\n", err)
+	cont, err := container.NewContainer(os.Args[2:])
+	if err != nil {
+		fmt.Printf("Error creating container: %v\n", err)
 		os.Exit(1)
 	}
-}
 
-func must(err error) {
-	if err != nil {
-		panic(err)
+	if err := cont.Child(); err != nil {
+		fmt.Printf("Error executing child process: %v\n", err)
+		os.Exit(1)
 	}
 }
